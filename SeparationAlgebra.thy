@@ -39,9 +39,17 @@ lemma ovp_conj_impl:
   using ovp_conj_def by fastforce
 
 lemma ovp_conj_sep_true_left:
-  "(P \<union>* Q) h \<Longrightarrow> (sep_true \<and>* Q) h"
-  unfolding ovp_conj_def
-  sorry
+  assumes "(P \<union>* Q) h"
+  shows "(sep_true \<and>* Q) h"
+  unfolding ovp_conj_def sep_conj_def
+proof -
+  have "(P \<union>* Q) h" using assms by blast
+  obtain h\<^sub>1 h\<^sub>2 h\<^sub>3 where "h\<^sub>1 ## h\<^sub>2 \<and> h\<^sub>2 ## h\<^sub>3 \<and> h\<^sub>1 ## h\<^sub>3 \<and>
+    h = h\<^sub>1 + h\<^sub>2 + h\<^sub>3 \<and> P (h\<^sub>1 + h\<^sub>2) \<and> Q (h\<^sub>2 + h\<^sub>3)"
+    using assms ovp_conjD by blast
+  then have "h\<^sub>1 ## (h\<^sub>2 + h\<^sub>3) \<and> h = h\<^sub>1 + (h\<^sub>2 + h\<^sub>3) \<and> Q (h\<^sub>2 + h\<^sub>3)" sorry
+  then show "\<exists>x y. x ## y \<and> h = x + y \<and> True \<and> Q y" by blast
+qed
 
 
 subsection {* Further properties: Lemma 3.1 (The Ramifications of Sharing in Data Structures) *}
@@ -67,9 +75,17 @@ lemma sep_conj_ovp_conj:
 
 (* Lemma 3.1 (5) *)
 lemma ovp_conj_sep_true_right:
-  "(P \<union>* Q) h \<Longrightarrow> (P \<and>* sep_true) h"
-  unfolding ovp_conj_def
-  sorry
+  assumes "(P \<union>* Q) h"
+  shows "(P \<and>* sep_true) h"
+  unfolding ovp_conj_def sep_conj_def
+proof -
+  have "(P \<union>* Q) h" using assms by blast
+  obtain h\<^sub>1 h\<^sub>2 h\<^sub>3 where "h\<^sub>1 ## h\<^sub>2 \<and> h\<^sub>2 ## h\<^sub>3 \<and> h\<^sub>1 ## h\<^sub>3 \<and>
+    h = h\<^sub>1 + h\<^sub>2 + h\<^sub>3 \<and> P (h\<^sub>1 + h\<^sub>2) \<and> Q (h\<^sub>2 + h\<^sub>3)"
+    using assms ovp_conjD by blast
+  then have "(h\<^sub>1 + h\<^sub>2) ## h\<^sub>3 \<and> h = (h\<^sub>1 + h\<^sub>2) + h\<^sub>3 \<and> P (h\<^sub>1 + h\<^sub>2)" sorry
+  then show "\<exists>x y. x ## y \<and> h = x + y \<and> P x \<and> True" by blast
+qed
 
 (* Lemma 3.1 (6) *)
 lemma ovp_conj_sep_imp_conj3:
