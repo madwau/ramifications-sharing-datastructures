@@ -4,6 +4,7 @@ begin
 
 class sep_ramification = sep_algebra +
   assumes eq_zero_left: "p + q = 0 \<Longrightarrow> p = 0"
+  assumes sep_disj_add: "h\<^sub>1 ## h\<^sub>2 \<and> h\<^sub>2 ## h\<^sub>3 \<and> h\<^sub>1 ## h\<^sub>3 \<Longrightarrow> h\<^sub>1 ## h\<^sub>2 + h\<^sub>3"
 begin
 
 lemma eq_zero_right: "p + q = 0 \<Longrightarrow> q = 0"
@@ -12,8 +13,8 @@ lemma eq_zero_right: "p + q = 0 \<Longrightarrow> q = 0"
 definition ovp_conj :: "('a \<Rightarrow> bool) \<Rightarrow> ('a \<Rightarrow> bool) \<Rightarrow> ('a \<Rightarrow> bool)" (infixr "\<union>*" 51)
   where
     "P \<union>* Q \<equiv> \<lambda>h. \<exists>h\<^sub>1 h\<^sub>2 h\<^sub>3. h\<^sub>1 ## h\<^sub>2 \<and> h\<^sub>2 ## h\<^sub>3 \<and> h\<^sub>1 ## h\<^sub>3 \<and>
-                           h = h\<^sub>1 + h\<^sub>2 + h\<^sub>3 \<and> 
-                           P (h\<^sub>1 + h\<^sub>2) \<and> Q (h\<^sub>2 + h\<^sub>3)"
+                             h = h\<^sub>1 + h\<^sub>2 + h\<^sub>3 \<and> 
+                             P (h\<^sub>1 + h\<^sub>2) \<and> Q (h\<^sub>2 + h\<^sub>3)"
 
 
 subsection {* Overlapping Conjunction Properties *}
@@ -47,7 +48,8 @@ proof -
   obtain h\<^sub>1 h\<^sub>2 h\<^sub>3 where "h\<^sub>1 ## h\<^sub>2 \<and> h\<^sub>2 ## h\<^sub>3 \<and> h\<^sub>1 ## h\<^sub>3 \<and>
     h = h\<^sub>1 + h\<^sub>2 + h\<^sub>3 \<and> P (h\<^sub>1 + h\<^sub>2) \<and> Q (h\<^sub>2 + h\<^sub>3)"
     using assms ovp_conjD by blast
-  then have "h\<^sub>1 ## (h\<^sub>2 + h\<^sub>3) \<and> h = h\<^sub>1 + (h\<^sub>2 + h\<^sub>3) \<and> Q (h\<^sub>2 + h\<^sub>3)" sorry
+  then have "h\<^sub>1 ## (h\<^sub>2 + h\<^sub>3) \<and> h = h\<^sub>1 + (h\<^sub>2 + h\<^sub>3) \<and> Q (h\<^sub>2 + h\<^sub>3)"
+    by (simp add: local.sep_add_assoc local.sep_disj_add)
   then show "\<exists>x y. x ## y \<and> h = x + y \<and> True \<and> Q y" by blast
 qed
 
@@ -58,8 +60,8 @@ subsection {* Further properties: Lemma 3.1 (The Ramifications of Sharing in Dat
 lemma ovp_conj_empty:
   "P \<union>* \<box> = P"
   unfolding ovp_conj_def sep_empty_def
-  apply (rule ext)
-  by (metis eq_zero_right local.sep_add_zero local.sep_disj_zero)
+proof (rule ext)
+qed (metis eq_zero_right local.sep_add_zero local.sep_disj_zero)
 
 (* Lemma 3.1 (3) *)
 lemma conj_ovp_conj:
@@ -83,17 +85,28 @@ proof -
   obtain h\<^sub>1 h\<^sub>2 h\<^sub>3 where "h\<^sub>1 ## h\<^sub>2 \<and> h\<^sub>2 ## h\<^sub>3 \<and> h\<^sub>1 ## h\<^sub>3 \<and>
     h = h\<^sub>1 + h\<^sub>2 + h\<^sub>3 \<and> P (h\<^sub>1 + h\<^sub>2) \<and> Q (h\<^sub>2 + h\<^sub>3)"
     using assms ovp_conjD by blast
-  then have "(h\<^sub>1 + h\<^sub>2) ## h\<^sub>3 \<and> h = (h\<^sub>1 + h\<^sub>2) + h\<^sub>3 \<and> P (h\<^sub>1 + h\<^sub>2)" sorry
+  then have "(h\<^sub>1 + h\<^sub>2) ## h\<^sub>3 \<and> h = (h\<^sub>1 + h\<^sub>2) + h\<^sub>3 \<and> P (h\<^sub>1 + h\<^sub>2)"
+    by (simp add: local.sep_disj_add local.sep_disj_addI1)
   then show "\<exists>x y. x ## y \<and> h = x + y \<and> P x \<and> True" by blast
 qed
 
 (* Lemma 3.1 (6) *)
 lemma ovp_conj_sep_imp_conj3:
   "P \<union>* Q = (EXS R. (R \<longrightarrow>* P) \<and>* (R \<longrightarrow>* Q) \<and>* R)"
-  unfolding ovp_conj_def sep_impl_def
-  apply (rule ext)
-  apply auto
-  sorry
+  unfolding ovp_conj_def sep_impl_def sep_conj_def
+  apply rule
+  apply safe
+  subgoal for h h1 h2 h3
+    apply (rule exI[where x="\<lambda>h. h=h2"])
+    apply (simp add: sep_conj_def)
+    apply (rule exI[where x="h1"])
+    apply (rule exI[where x="h2+h3"])
+    apply (simp add: sep_disj_add sep_add_assoc)
+    apply (rule exI[where x="h3"])
+    by (simp add: sep_disj_commuteI sep_add_commute)
+  subgoal for h R
+    by (metis sep_add_assoc sep_add_commute sep_disj_addD2 sep_disj_commuteI)
+  done
 
 (* Lemma 3.1 (7) *)
 lemma ovp_conj_commute:
@@ -114,6 +127,7 @@ instance "fun" :: (type,opt) sep_ramification
   apply standard
   unfolding zero_fun_def plus_fun_def
   apply (rule ext) 
-  by meson
+  apply meson
+  sorry
 
 end
