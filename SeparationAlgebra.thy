@@ -128,10 +128,6 @@ lemma ovp_conj_commute:
   by (rule ext) (auto intro: ovp_conj_commuteI)
 
 (* Lemma 3.1 (8) *)
-
-
-thm sep_disj_add3[of h\<^sub>1 h\<^sub>1' h\<^sub>2' h\<^sub>3']
-
 lemma ovp_conj_assoc:
   "P \<union>* (Q \<union>* R) = (P \<union>* Q) \<union>* R" (is "?lhs = ?rhs")
 proof (rule ext, rule iffI)
@@ -235,7 +231,109 @@ proof (rule ext, rule iffI)
 next
   fix h
   assume a: "?rhs h"
-  thus "?lhs h" sorry
+  then obtain h\<^sub>1 h\<^sub>2 h\<^sub>3 h\<^sub>1' h\<^sub>2' h\<^sub>3' where
+    "R (h\<^sub>2 + h\<^sub>3)" and
+    "h\<^sub>1 ## h\<^sub>2" and "h\<^sub>2 ## h\<^sub>3" and "h\<^sub>1 ## h\<^sub>3" and "h = h\<^sub>1 + h\<^sub>2 + h\<^sub>3" and 
+    "P (h\<^sub>1' + h\<^sub>2')" and "Q (h\<^sub>2' + h\<^sub>3')" and
+    "h\<^sub>1' ## h\<^sub>2'" and "h\<^sub>2' ## h\<^sub>3'" and "h\<^sub>1' ## h\<^sub>3'" and "h\<^sub>1 + h\<^sub>2 = h\<^sub>1' + h\<^sub>2' + h\<^sub>3'"
+    by (metis ovp_conjE)
+  moreover
+  then have "h\<^sub>1 + h\<^sub>2 = h\<^sub>1' + (h\<^sub>2' + h\<^sub>3')"
+    by (simp add: local.sep_add_assoc)
+  then obtain ac ad bc bd where
+    CS: "ac+ad=h\<^sub>1 \<and> bc+bd=h\<^sub>2 \<and> ac+bc=h\<^sub>1' \<and> ad+bd=h\<^sub>2'+h\<^sub>3' \<and>
+     ac ## ad \<and> ac ## bc \<and> ac ## bd \<and> ad ## bc \<and> ad ## bd \<and> bc ## bd"
+    using cross_split by blast
+  ultimately
+  show "?lhs h"
+    unfolding ovp_conj_def
+    apply safe
+    apply (rule exI[where x="ac"])
+    apply (rule exI[where x="h\<^sub>2' + bc"])
+    apply (rule exI[where x="h\<^sub>3 + h\<^sub>3'"])
+  proof (safe, goal_cases)
+    case 1
+    then show ?case
+      using sep_add_disjI2 sep_disj_commute by blast
+  next
+    case 2
+    then show ?case 
+      by (smt local.sep_add_assoc local.sep_add_commute local.sep_add_disjD local.sep_add_disjI2 local.sep_disj_commuteI sep_disj_add2)
+  next
+    case 3
+    have "h\<^sub>3 ## h\<^sub>1 + h\<^sub>2"
+      using \<open>h\<^sub>1 ## h\<^sub>2\<close> \<open>h\<^sub>1 ## h\<^sub>3\<close> \<open>h\<^sub>2 ## h\<^sub>3\<close> local.sep_disj_add local.sep_disj_commuteI by blast
+    then have "h\<^sub>3 ## h\<^sub>1' + h\<^sub>2' + h\<^sub>3'"
+      by (simp add: \<open>h\<^sub>1 + h\<^sub>2 = h\<^sub>1' + h\<^sub>2' + h\<^sub>3'\<close>)
+    then have "h\<^sub>3 ## h\<^sub>1'"
+      using sep_disj_add3 by blast
+    then show ?case
+      using "3"(16) "3"(17) "3"(4) "3"(9) \<open>h\<^sub>3 ## h\<^sub>1' + h\<^sub>2' + h\<^sub>3'\<close> local.sep_add_disjD local.sep_disj_add sep_disj_right by blast
+  next
+    case 4
+    have "h\<^sub>3 ## h\<^sub>1 + h\<^sub>2"
+      using \<open>h\<^sub>1 ## h\<^sub>2\<close> \<open>h\<^sub>1 ## h\<^sub>3\<close> \<open>h\<^sub>2 ## h\<^sub>3\<close> local.sep_disj_add local.sep_disj_commuteI by blast
+    then have A: "h\<^sub>3 ## h\<^sub>1' + h\<^sub>2' + h\<^sub>3'"
+      by (simp add: \<open>h\<^sub>1 + h\<^sub>2 = h\<^sub>1' + h\<^sub>2' + h\<^sub>3'\<close>)
+
+    have "ac + ad + (bc + bd) + h\<^sub>3 = h\<^sub>1 + h\<^sub>2 + h\<^sub>3"
+      using "4"(11) \<open>h = h\<^sub>1 + h\<^sub>2 + h\<^sub>3\<close> by blast
+    also have "\<dots> = h\<^sub>3 + (h\<^sub>1' + h\<^sub>2' + h\<^sub>3')"
+      using \<open>h\<^sub>1 + h\<^sub>2 = h\<^sub>1' + h\<^sub>2' + h\<^sub>3'\<close> A local.sep_add_commute by fastforce
+    also have "\<dots> = ac + (h\<^sub>2' + bc) + (h\<^sub>3 + h\<^sub>3')"
+      by (smt "4"(14) "4"(17) "4"(8) \<open>h\<^sub>1' ## h\<^sub>2'\<close> \<open>h\<^sub>1' ## h\<^sub>3'\<close> A local.sep_add_commute local.sep_add_left_commute local.sep_disj_add local.sep_disj_commuteI sep_disj_right)
+    finally show ?case by blast
+  next
+    case 5
+    then show ?case
+      by (metis local.sep_add_assoc local.sep_add_commute local.sep_add_disjD)
+  next
+    case 6
+    show ?case
+      apply (rule exI[where x="ad"])
+      apply (rule exI[where x="bd"])
+      apply (rule exI[where x="bc + h\<^sub>3"])
+    proof (safe, goal_cases)
+      case 1
+      then show ?case
+        by (simp add: "6"(20))
+    next
+      case 2
+      then show ?case
+        using "6"(21) "6"(3) local.sep_add_disjI1 local.sep_disj_commuteI by blast
+    next
+      case 3
+      then show ?case
+        by (meson "6"(16) "6"(19) "6"(21) "6"(3) "6"(4) local.sep_add_disjD local.sep_disj_commuteI sep_disj_add2)
+    next
+      case 4
+      have A: "h\<^sub>3 ## bc \<and> bc ## h\<^sub>2' \<and> bc ## h\<^sub>3'"
+        using CS \<open>h\<^sub>1' ## h\<^sub>2'\<close> \<open>h\<^sub>1' ## h\<^sub>3'\<close> \<open>h\<^sub>2 ## h\<^sub>3\<close> local.sep_add_disjD local.sep_disj_commuteI by blast
+      have B: "h\<^sub>3 ## h\<^sub>3'" 
+        by (metis "6"(8) \<open>h\<^sub>1 ## h\<^sub>2\<close> \<open>h\<^sub>1 ## h\<^sub>3\<close> \<open>h\<^sub>1 + h\<^sub>2 = h\<^sub>1' + (h\<^sub>2' + h\<^sub>3')\<close> \<open>h\<^sub>1' ## h\<^sub>2'\<close> \<open>h\<^sub>1' ## h\<^sub>3'\<close> \<open>h\<^sub>2 ## h\<^sub>3\<close> local.sep_add_disjD local.sep_disj_add local.sep_disj_commuteI)
+      have C: "h\<^sub>2' ## h\<^sub>3' \<and> h\<^sub>2' ## h\<^sub>3"
+        by (metis "6"(8) \<open>h\<^sub>1 ## h\<^sub>2\<close> \<open>h\<^sub>1 ## h\<^sub>3\<close> \<open>h\<^sub>1 + h\<^sub>2 = h\<^sub>1' + (h\<^sub>2' + h\<^sub>3')\<close> \<open>h\<^sub>1' ## h\<^sub>2'\<close> \<open>h\<^sub>1' ## h\<^sub>3'\<close> \<open>h\<^sub>2 ## h\<^sub>3\<close> local.sep_add_left_commute local.sep_disj_add local.sep_disj_commuteI sep_disj_left)
+
+      have "h\<^sub>2' + bc + (h\<^sub>3 + h\<^sub>3') = h\<^sub>2' + bc + h\<^sub>3 + h\<^sub>3'"
+        using A by (metis "6"(8) \<open>h\<^sub>1 ## h\<^sub>2\<close> \<open>h\<^sub>1 ## h\<^sub>3\<close> \<open>h\<^sub>1 + h\<^sub>2 = h\<^sub>1' + (h\<^sub>2' + h\<^sub>3')\<close> \<open>h\<^sub>1' ## h\<^sub>2'\<close> \<open>h\<^sub>1' ## h\<^sub>3'\<close> \<open>h\<^sub>2 ## h\<^sub>3\<close> local.sep_add_assoc local.sep_add_disjD local.sep_disj_commuteI sep_disj_add2)
+      also have "\<dots> = h\<^sub>2' + (bc + h\<^sub>3 + h\<^sub>3')"
+        using A by (metis "6"(8) \<open>h\<^sub>1 ## h\<^sub>2\<close> \<open>h\<^sub>1 ## h\<^sub>3\<close> \<open>h\<^sub>1 + h\<^sub>2 = h\<^sub>1' + (h\<^sub>2' + h\<^sub>3')\<close> \<open>h\<^sub>1' ## h\<^sub>2'\<close> \<open>h\<^sub>1' ## h\<^sub>3'\<close> \<open>h\<^sub>2 ## h\<^sub>3\<close> local.sep_add_assoc local.sep_add_disjD local.sep_disj_add local.sep_disj_commuteI)
+      also have "\<dots> = h\<^sub>2' + (h\<^sub>3' + bc + h\<^sub>3)"
+        using B by (simp add: A local.sep_add_assoc local.sep_add_commute local.sep_disj_commuteI)
+      also have "\<dots> = h\<^sub>2' + h\<^sub>3' + bc + h\<^sub>3"
+        using B C by (simp add: A local.sep_add_assoc local.sep_disj_commuteI sep_disj_add2)
+      also have "\<dots> = ad + bd + (bc + h\<^sub>3)"
+        by (simp add: "6"(15) A B C local.sep_add_assoc local.sep_disj_commuteI sep_disj_add2)
+      finally show ?case by simp
+    next
+      case 5
+      then show ?case by (simp add: "6"(15) "6"(6))
+    next
+      case 6
+      then show ?case
+        by (metis CS \<open>R (h\<^sub>2 + h\<^sub>3)\<close> \<open>h\<^sub>2 ## h\<^sub>3\<close> local.sep_add_assoc local.sep_add_commute local.sep_disj_commuteI sep_disj_left)
+    qed
+  qed
 qed
 
 end
@@ -244,8 +342,8 @@ end
 instance "fun" :: (type,opt) sep_ramification
   apply standard
   unfolding zero_fun_def plus_fun_def
-    apply (rule ext) 
-    apply meson
+  apply (rule ext) 
+  apply meson
   sorry
 
 end
